@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Registro Congreso COMENSUR</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<style>
+  body{margin:0;font-family:Segoe UI,sans-serif;background:#fef9f3;
+       display:flex;justify-content:center;align-items:center;min-height:100vh;}
+  .container{background:#fff;border:1px solid #e6dcd0;border-radius:10px;
+             box-shadow:0 5px 15px rgba(0,0,0,.1);padding:30px;max-width:500px;width:90%;}
+  h1{text-align:center;color:#704f39;margin-bottom:20px}
+  .form-group{margin-bottom:15px}
+  label{display:block;margin-bottom:5px;font-weight:600}
+  input,select{width:100%;padding:10px;border:1px solid #ccc;border-radius:6px;font-size:14px}
+  input:focus,select:focus{border-color:#b18765;outline:none}
+  #dni::-webkit-inner-spin-button,#edad::-webkit-inner-spin-button,
+  #celular::-webkit-inner-spin-button,#dni::-webkit-outer-spin-button,
+  #edad::-webkit-outer-spin-button,#celular::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+  #dni,#edad,#celular{-moz-appearance:textfield}
+  .error{color:#c00;font-size:13px;margin-top:3px}
+  .success{display:none;background:#e6ffe6;color:#256029;padding:10px;border:1px solid #8dd28d;
+           border-radius:6px;text-align:center;margin-top:15px}
+  .btn{background:#8c6e5d;color:#fff;border:none;padding:12px;width:100%;border-radius:6px;
+       font-size:15px;font-weight:600;cursor:pointer;transition:background .2s}
+  .btn:hover{background:#7a5d4c}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Registro – COMENSUR</h1>
+
+  <form id="formulario">
+    <div class="form-group">
+      <label for="dni">DNI</label>
+      <input type="number" id="dni" required oninput="limit(this,8)">
+      <div class="error" id="dniErr"></div>
+    </div>
+
+    <div class="form-group">
+      <label for="nombre">Nombre completo</label>
+      <input type="text" id="nombre" required>
+    </div>
+
+    <div class="form-group">
+      <label for="edad">Edad</label>
+      <input type="number" id="edad" required min="17" max="99" oninput="limit(this,2)">
+      <div class="error" id="edadErr"></div>
+    </div>
+
+    <div class="form-group">
+      <label for="sexo">Sexo</label>
+      <select id="sexo" required>
+        <option value="">Seleccionar</option><option value="mujer">Mujer</option><option value="hombre">Hombre</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="ocupacion">Ocupación</label>
+      <select id="ocupacion" required>
+        <option value="">Seleccionar</option>
+        <option value="estudiante_unjbg">Estudiante UNJBG</option>
+        <option value="estudiante_otra">Estudiante otra institución</option>
+        <option value="docente_unjbg">Docente UNJBG</option>
+        <option value="publico">Público general</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="celular">Celular</label>
+      <input type="number" id="celular" required oninput="limit(this,9)">
+      <div class="error" id="celErr"></div>
+    </div>
+
+    <div class="form-group">
+      <label for="pago">Método de pago</label>
+      <select id="pago" required>
+        <option value="">Seleccionar</option><option>Yape</option><option>Plin</option>
+        <option>banco</option><option>Efectivo</option><option>Otros</option>
+      </select>
+    </div>
+
+    <button class="btn" type="submit">Registrar</button>
+    <div id="msg" class="success"></div>
+  </form>
+</div>
+
+<script>
+const URL = 'https://script.google.com/macros/s/AKfycbzL-ymdOd_g44JNqoTEncFHhV8K6nx0mJMpYUBtR4nSN6WfUy0ZV8x5CDQSZ07J0Q5K/exec';
+
+/* limitar longitud en tiempo real */
+function limit(inp,max){ if(inp.value.length>max) inp.value=inp.value.slice(0,max); }
+
+/* envío */
+document.getElementById('formulario').addEventListener('submit',async e=>{
+  e.preventDefault();
+  ['dniErr','edadErr','celErr'].forEach(id=>document.getElementById(id).textContent='');
+
+  const dni  = dniVal(),  edad = edadVal(),  cel  = celVal();
+  if(!dni||!edad||!cel) return;                 // si hay errores, aborta
+
+  const datos = {
+    dni, nombre: nombre.value.trim(), edad,
+    sexo: sexo.value, ocupacion: ocupacion.value,
+    celular: cel, pago: pago.value
+  };
+
+  try{
+    const r = await fetch(,{method:'POST',headers:{'Content-Type':'application/json'},
+                               body:JSON.stringify(datos)});
+    const texto = await r.text();
+    console.log('Servidor:',texto);
+    msg.textContent = '¡Registro exitoso!';
+    msg.style.display = 'block';
+    formulario.reset();
+  }catch(err){
+    console.error(err);
+    alert('Error al registrar. Vuelve a intentar.');
+  }
+});
+
+/* ─ validaciones simples ─ */
+function dniVal(){
+  const v = dni.value.trim();
+  if(!/^\d{8}$/.test(v)){ dniErr.textContent='DNI = 8 dígitos'; return null;}
+  return v;
+}
+function edadVal(){
+  const v = edad.value.trim();
+  if(v<17||v>99||!/^\d{2}$/.test(v)){ edadErr.textContent='Edad 17‑99'; return null;}
+  return v;
+}
+function celVal(){
+  const v = celular.value.trim();
+  if(!/^\d{9}$/.test(v)){ celErr.textContent='Celular = 9 dígitos'; return null;}
+  return v;
+}
+</script>
+</body>
+</html>
